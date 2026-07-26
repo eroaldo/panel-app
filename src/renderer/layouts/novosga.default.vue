@@ -85,12 +85,11 @@
             if (!this.config.speech) {
               return Promise.resolve()
             }
-            let texts = ['Senha']
-            this.message.$data.siglaSenha.split('').forEach(char => texts.push(char))
-            texts.push(this.message.$data.numeroSenha)
-            texts.push(this.message.$data.local)
-            texts.push(this.message.$data.numeroLocal)
-            return speech.speechAll(texts, this.config.locale)
+           const senha = this.message.$data.siglaSenha + ' ' + this.message.$data.numeroSenha
+
+           const texto = `Senha ${senha}. Dirija-se ao ${this.message.$data.local} ${this.message.$data.numeroLocal}.`
+
+          return speech.speech(texto, this.config.locale)
           })
           .then(() => {
             this.isCalling = false
