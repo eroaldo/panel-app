@@ -6,7 +6,7 @@ const state = {
   availableThemes: [
     {
       id: 'novosga.default',
-      name: 'Default',
+      name: 'Padrão (sem vídeo)',
       options: [
         {
           name: 'logo',
@@ -23,6 +23,31 @@ const state = {
           placeholder: ''
         }
       ]
+    },
+    {
+      id: 'novosga.video',
+      name: 'Painel com vídeo',
+      options: [
+        {
+          name: 'logo',
+          label: 'Logo',
+          type: 'url',
+          required: false,
+          placeholder: 'https://'
+        },
+        {
+          name: 'footerText',
+          label: 'Texto do rodapé',
+          type: 'text',
+          required: false,
+          placeholder: ''
+        }
+      ]
+    },
+    {
+      id: 'novosga.tv',
+      name: 'TV (lista M3U)',
+      options: []
     }
   ]
 }
