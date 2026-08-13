@@ -7,7 +7,7 @@ RUN git config --global url.https://github.com/.insteadOf git://github.com/ && n
 
 COPY . /app
 RUN npm run build:web && \
-    sed -i 's/src=web.js/src=web.js?v=20260803-14/' /app/dist/web/index.html
+    sed -i 's/src=web.js/src=web.js?v=20260813-15-tts-speed/' /app/dist/web/index.html
 
 FROM nginx:alpine
 
