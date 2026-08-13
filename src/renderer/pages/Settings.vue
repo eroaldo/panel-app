@@ -610,6 +610,14 @@
           </div>
 
           <div class="field">
+            <label class="label">Velocidade da leitura: {{ Number(ttsConfig.speed || 1).toFixed(2) }}x</label>
+            <div class="control">
+              <input type="range" min="0.5" max="2" step="0.05" v-model.number="ttsConfig.speed">
+            </div>
+            <p class="help">0,50x é mais lenta, 1,00x é normal e 2,00x é mais rápida.</p>
+          </div>
+
+          <div class="field">
             <label class="label">Senha administrativa</label>
             <div class="control">
               <input class="input is-medium" type="password" v-model="ttsAdminPassword" required autocomplete="current-password">
@@ -765,7 +773,7 @@
         initialClientSecret: null,
         initialUsername: null,
         initialPassword: null,
-        ttsConfig: { endpoint: '', voice: '', token: '', hasToken: false },
+        ttsConfig: { endpoint: '', voice: '', speed: 1, token: '', hasToken: false },
         ttsAdminPassword: '',
         tvConfig: { playlistUrl: '', hasPlaylist: false, defaultChannelId: '', volume: 15 },
         tvChannels: [],
@@ -858,7 +866,7 @@
           .then(response => response.json().then(body => ({ response, body })))
           .then(({ response, body }) => {
             if (!response.ok) throw new Error(body.error || 'Falha ao carregar TTS')
-            this.ttsConfig = { endpoint: body.endpoint, voice: body.voice, token: '', hasToken: body.hasToken }
+            this.ttsConfig = { endpoint: body.endpoint, voice: body.voice, speed: Number(body.speed || 1), token: '', hasToken: body.hasToken }
           })
           .catch(error => this.$swal('Oops!', error.message, 'error'))
       },
@@ -874,7 +882,7 @@
           .then(response => response.json().then(body => ({ response, body })))
           .then(({ response, body }) => {
             if (!response.ok) throw new Error(body.error || 'Falha ao salvar TTS')
-            this.ttsConfig = { endpoint: body.endpoint, voice: body.voice, token: '', hasToken: body.hasToken }
+            this.ttsConfig = { endpoint: body.endpoint, voice: body.voice, speed: Number(body.speed || 1), token: '', hasToken: body.hasToken }
             this.ttsAdminPassword = ''
             this.$swal('Success', 'Configuração do TTS salva', 'success')
           })
