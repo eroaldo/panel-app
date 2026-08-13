@@ -1,0 +1,55 @@
+server {
+    listen 80;
+    listen [::]:80;
+    server_name localhost;
+    add_header Content-Security-Policy "upgrade-insecure-requests" always;
+
+    location = /api/tts {
+        limit_except POST { deny all; }
+        client_max_body_size 16k;
+        proxy_pass http://panel-tts-config:8787/speech;
+        proxy_http_version 1.1;
+        proxy_set_header Content-Type application/json;
+        proxy_set_header Host panel-tts-config;
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 25s;
+        proxy_send_timeout 10s;
+    }
+
+    location = /api/tts/config {
+        limit_except GET PUT { deny all; }
+        client_max_body_size 16k;
+        proxy_pass http://panel-tts-config:8787/config;
+        proxy_http_version 1.1;
+        proxy_set_header Host panel-tts-config;
+        proxy_set_header Content-Type application/json;
+        proxy_set_header X-Admin-Password $http_x_admin_password;
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 10s;
+    }
+
+    location /api/tv/ {
+        proxy_pass http://panel-tts-config:8787/tv/;
+        proxy_http_version 1.1;
+        proxy_set_header Host panel-tts-config;
+        proxy_set_header X-Admin-Password $http_x_admin_password;
+        proxy_set_header Range $http_range;
+        proxy_buffering off;
+        proxy_request_buffering off;
+        proxy_connect_timeout 10s;
+        proxy_read_timeout 60s;
+        proxy_send_timeout 60s;
+    }
+
+    location /media/ {
+        alias /media/;
+        autoindex off;
+        add_header Cache-Control "public, max-age=3600";
+    }
+
+    location / {
+        root /usr/share/nginx/html;
+        index index.html;
+        try_files $uri $uri/ /index.html;
+    }
+}

@@ -39,6 +39,21 @@
                 {{ 'menu.sound'|trans }}
               </a>
             </li>
+            <li>
+              <a @click="showTab('video')" :class="{ 'is-active': (tab==='video') }">
+                Vídeo
+              </a>
+            </li>
+            <li>
+              <a @click="showTab('tv')" :class="{ 'is-active': (tab==='tv') }">
+                Lista M3U
+              </a>
+            </li>
+            <li>
+              <a @click="showTab('tts')" :class="{ 'is-active': (tab==='tts') }">
+                TTS
+              </a>
+            </li>
           </ul>
         </aside>
       </div>
@@ -504,6 +519,166 @@
             </div>
           </div>
         </form>
+
+        <form @submit.prevent="save" v-if="tab==='video'">
+          <div class="notification is-info">
+            Selecione <strong>Painel com vídeo</strong> na opção Tema da aba Interface para exibir o vídeo. Para voltar ao painel tradicional, selecione <strong>Padrão (sem vídeo)</strong>.
+          </div>
+
+          <div class="field">
+            <label class="label">Origem do vídeo</label>
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select v-model="config.videoType">
+                  <option value="youtube">YouTube</option>
+                  <option value="local">Vídeo local ou URL MP4</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label">
+              {{ config.videoType === 'youtube' ? 'Link do YouTube' : 'Caminho local ou URL do vídeo' }}
+            </label>
+            <div class="control">
+              <input
+                class="input is-medium"
+                type="text"
+                :placeholder="config.videoType === 'youtube' ? 'https://www.youtube.com/watch?v=...' : '/media/video.mp4 ou https://.../video.mp4'"
+                v-model.trim="config.videoUrl">
+            </div>
+            <p class="help" v-if="config.videoType === 'local'">
+              Para um arquivo hospedado no painel, use /media/nome-do-video.mp4.
+            </p>
+          </div>
+
+          <div class="field">
+            <label class="checkbox">
+              <input type="checkbox" v-model="config.videoControls">
+              Mostrar controles do vídeo
+            </label>
+          </div>
+
+          <div class="field">
+            <label class="label">Volume do vídeo: {{ config.videoVolume }}%</label>
+            <div class="control">
+              <input type="range" min="0" max="100" step="1" v-model.number="config.videoVolume">
+            </div>
+          </div>
+
+          <div class="notification is-light">
+            O vídeo inicia automaticamente, em repetição e com o volume configurado acima.
+          </div>
+
+          <hr>
+
+          <div class="field is-grouped is-grouped-right">
+            <div class="control">
+              <button type="submit" class="button is-primary is-large">
+                {{ 'settings.btn.save'|trans }} &nbsp;
+                <span class="icon is-small"><i class="fa fa-save"></i></span>
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <form @submit.prevent="saveTtsConfig" v-if="tab==='tts'">
+          <div class="notification is-warning">
+            O token fica protegido no servidor. Deixe o campo token vazio para manter a credencial atual.
+          </div>
+
+          <div class="field">
+            <label class="label">URL do endpoint TTS</label>
+            <div class="control">
+              <input class="input is-medium" type="url" v-model.trim="ttsConfig.endpoint" required>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label">Voz</label>
+            <div class="control">
+              <input class="input is-medium" type="text" v-model.trim="ttsConfig.voice" required>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label">Novo token</label>
+            <div class="control">
+              <input class="input is-medium" type="password" v-model="ttsConfig.token" :placeholder="ttsConfig.hasToken ? 'Token configurado — deixe vazio para manter' : 'Informe o token'">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label">Senha administrativa</label>
+            <div class="control">
+              <input class="input is-medium" type="password" v-model="ttsAdminPassword" required autocomplete="current-password">
+            </div>
+          </div>
+
+          <div class="field is-grouped is-grouped-right">
+            <div class="control">
+              <button type="button" class="button is-light is-large" @click="testExternalTts">Testar voz</button>
+            </div>
+            <div class="control">
+              <button type="submit" class="button is-primary is-large">
+                Salvar TTS &nbsp;<span class="icon is-small"><i class="fa fa-save"></i></span>
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <form @submit.prevent="saveTvConfig" v-if="tab==='tv'">
+          <div class="notification is-info">
+            A URL da lista fica protegida no servidor. Deixe o campo vazio para manter a lista atual.
+          </div>
+
+          <div class="field">
+            <label class="label">URL da lista M3U</label>
+            <div class="control">
+              <input class="input is-medium" type="password" v-model="tvConfig.playlistUrl" :placeholder="tvConfig.hasPlaylist ? 'Lista configurada — deixe vazio para manter' : 'https://.../lista.m3u'">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label">Canal inicial</label>
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select v-model="tvConfig.defaultChannelId">
+                  <option value="">Primeiro canal da lista</option>
+                  <option v-for="channel in tvChannels" :value="channel.id" :key="channel.id">
+                    {{ channel.group ? channel.group + ' — ' : '' }}{{ channel.name }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label">Volume da TV: {{ tvConfig.volume }}%</label>
+            <div class="control">
+              <input type="range" min="0" max="100" step="1" v-model.number="tvConfig.volume">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label">Senha administrativa</label>
+            <div class="control">
+              <input class="input is-medium" type="password" v-model="tvAdminPassword" required autocomplete="current-password">
+            </div>
+          </div>
+
+          <div class="field is-grouped is-grouped-right">
+            <div class="control">
+              <button type="button" class="button is-light is-large" @click="loadTvChannels(true)">Atualizar canais</button>
+            </div>
+            <div class="control">
+              <button type="submit" class="button is-primary is-large">
+                Salvar lista &nbsp;<span class="icon is-small"><i class="fa fa-save"></i></span>
+              </button>
+            </div>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -524,6 +699,10 @@
     ctx.config.services = ctx.config.services || []
     ctx.config.alert = ctx.config.alert || audio.alertsAvailable.Default
     ctx.config.speech = !!ctx.config.speech
+    ctx.config.videoType = ctx.config.videoType || 'youtube'
+    ctx.config.videoUrl = ctx.config.videoUrl || ''
+    ctx.config.videoControls = !!ctx.config.videoControls
+    ctx.config.videoVolume = Number(ctx.config.videoVolume == null ? 15 : ctx.config.videoVolume)
 
     ctx.config.pageBgColorNormal = ctx.config.pageBgColorNormal || '#FFFFFF'
     ctx.config.pageFontColorNormal = ctx.config.pageFontColorNormal || '#000000'
@@ -586,6 +765,11 @@
         initialClientSecret: null,
         initialUsername: null,
         initialPassword: null,
+        ttsConfig: { endpoint: '', voice: '', token: '', hasToken: false },
+        ttsAdminPassword: '',
+        tvConfig: { playlistUrl: '', hasPlaylist: false, defaultChannelId: '', volume: 15 },
+        tvChannels: [],
+        tvAdminPassword: '',
         fetchUnities: !this.unities,
         fetchServices: !this.services
       }
@@ -618,6 +802,101 @@
     methods: {
       showTab (tab) {
         this.tab = tab
+        if (tab === 'tts') this.loadTtsConfig()
+        if (tab === 'tv') this.loadTvConfig()
+      },
+      loadTvConfig () {
+        fetch('/api/tv/config')
+          .then(response => response.json().then(body => ({ response, body })))
+          .then(({ response, body }) => {
+            if (!response.ok) throw new Error(body.error || 'Falha ao carregar lista M3U')
+            this.tvConfig = {
+              playlistUrl: '',
+              hasPlaylist: body.hasPlaylist,
+              defaultChannelId: body.defaultChannelId || '',
+              volume: Number(body.volume == null ? 15 : body.volume)
+            }
+            if (body.hasPlaylist) this.loadTvChannels(false)
+          })
+          .catch(error => this.$swal('Oops!', error.message, 'error'))
+      },
+      loadTvChannels (refresh) {
+        fetch(`/api/tv/channels${refresh ? '?refresh=1' : ''}`)
+          .then(response => response.json().then(body => ({ response, body })))
+          .then(({ response, body }) => {
+            if (!response.ok) throw new Error(body.error || 'Falha ao carregar canais')
+            this.tvChannels = body.channels || []
+          })
+          .catch(error => this.$swal('Oops!', error.message, 'error'))
+      },
+      saveTvConfig () {
+        fetch('/api/tv/config', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-Password': this.tvAdminPassword
+          },
+          body: JSON.stringify(this.tvConfig)
+        })
+          .then(response => response.json().then(body => ({ response, body })))
+          .then(({ response, body }) => {
+            if (!response.ok) throw new Error(body.error || 'Falha ao salvar lista M3U')
+            this.tvConfig = {
+              playlistUrl: '',
+              hasPlaylist: body.hasPlaylist,
+              defaultChannelId: body.defaultChannelId || '',
+              volume: body.volume
+            }
+            this.tvAdminPassword = ''
+            this.$swal('Success', 'Configuração da TV salva', 'success')
+            this.loadTvChannels(true)
+          })
+          .catch(error => this.$swal('Oops!', error.message, 'error'))
+      },
+      loadTtsConfig () {
+        fetch('/api/tts/config')
+          .then(response => response.json().then(body => ({ response, body })))
+          .then(({ response, body }) => {
+            if (!response.ok) throw new Error(body.error || 'Falha ao carregar TTS')
+            this.ttsConfig = { endpoint: body.endpoint, voice: body.voice, token: '', hasToken: body.hasToken }
+          })
+          .catch(error => this.$swal('Oops!', error.message, 'error'))
+      },
+      saveTtsConfig () {
+        fetch('/api/tts/config', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Admin-Password': this.ttsAdminPassword
+          },
+          body: JSON.stringify(this.ttsConfig)
+        })
+          .then(response => response.json().then(body => ({ response, body })))
+          .then(({ response, body }) => {
+            if (!response.ok) throw new Error(body.error || 'Falha ao salvar TTS')
+            this.ttsConfig = { endpoint: body.endpoint, voice: body.voice, token: '', hasToken: body.hasToken }
+            this.ttsAdminPassword = ''
+            this.$swal('Success', 'Configuração do TTS salva', 'success')
+          })
+          .catch(error => this.$swal('Oops!', error.message, 'error'))
+      },
+      testExternalTts () {
+        fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ input: 'Teste de voz do painel' })
+        })
+          .then(response => {
+            if (!response.ok) throw new Error('Falha ao gerar áudio de teste')
+            return response.blob()
+          })
+          .then(blob => {
+            const url = URL.createObjectURL(blob)
+            const player = new Audio(url)
+            player.onended = () => URL.revokeObjectURL(url)
+            return player.play()
+          })
+          .catch(error => this.$swal('Oops!', error.message, 'error'))
       },
       changeTheme () {
         this.config.themeOptions = {}
